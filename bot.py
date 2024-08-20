@@ -42,7 +42,7 @@ def send_id(message):
     bot.send_message(message.chat.id, message.chat.id)
     
  
-    
+
 @bot.message_handler(commands=['legend'])
 def send_legend(message):
     bot.send_message(message.chat.id, 'Ходит легенда о воине сделавшем этого бота \n@biznesmanil - его имя')
