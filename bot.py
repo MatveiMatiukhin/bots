@@ -12,24 +12,54 @@ logging.basicConfig(level=logging.INFO)
 
 
 waiting_for_resume = {}
+
 resume_submitters = {}
+
 waiting_for_technical_task={}
+
 technical_task_submitters={}
+
+start_count = {}
+
+technical_task_counter = 0
+
+user_technical_tasks = {}
+
 authorized_users=[1098482972]
+
 
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
     # Проверка параметров, переданных в URL
+    user_id = message.chat.id
+    
+    # Увеличиваем счетчик вызовов команды /start для пользователя
+    if user_id in start_count:
+        start_count[user_id] += 1
+    
+    else:
+        start_count[user_id] = 1
+    
+    # Если пользователь отправил /start первый раз
+    if start_count[user_id] < 3:
+        bot.send_message(user_id, 'Недоступная функция')
+    
     if "sendactions" in message.text:
         send_actions_menu1(message.chat.id)
+        
+    # Если пользователь отправил /start второй раз
+    elif start_count[user_id] >= 3:
+        bot.send_message(user_id, 'Пошел нахуй отсюда, черт')
+    
+    elif "sendactions" in message.text:
+        send_actions_menu1(message.chat.id)
+        
     elif message.chat.id in authorized_users:
         markup = types.InlineKeyboardMarkup()
         bt1 = types.InlineKeyboardButton('ССылка на тг канал', url=f"https://t.me/free_chanel90")
         markup.add(bt1)
         markup.add(types.InlineKeyboardButton('Доюавить ТЗ', callback_data='customer'))
         bot.reply_to(message, 'Выберите предпочитаемое действие:', reply_markup=markup)
-    else:
-        bot.send_message(message.chat.id, 'Пошел нахуй отсюда, черт')
 
 
 @bot.message_handler(commands=['help'])
@@ -55,7 +85,14 @@ def send_info(message):
 @bot.message_handler(func=lambda message: message.chat.id in waiting_for_resume and waiting_for_resume[message.chat.id])
 def handle_resume(message):
     submitter_id = message.from_user.id
-    developer_chat_id = 1098482972 # ID разработчика (здесь укажите ваш ID)
+    developer_chat_id = 1098482972  # ID разработчика
+
+    if message.chat.id in user_technical_tasks:
+        task_number = user_technical_tasks[message.chat.id]
+    
+    else:
+        task_number = "Неизвестно"
+
     resume_submitters[message.chat.id] = submitter_id
 
     markup = types.InlineKeyboardMarkup()
@@ -64,8 +101,10 @@ def handle_resume(message):
     markup.add(bt9, bt10)
 
     try:
+        
         if message.content_type == 'text':
-            bot.send_message(developer_chat_id, f"Резюме от пользователя (@{message.from_user.username}):\n{message.text}", reply_markup=markup)
+            bot.send_message(developer_chat_id, f"Резюме от пользователя (@{message.from_user.username}) на техническое задание №{task_number}:\n{message.text}", reply_markup=markup)
+    
     except Exception as e:
         logging.error(f"Произошла ошибка при отправке резюме: {str(e)}")
         bot.send_message(message.chat.id, f"Произошла ошибка при отправке резюме: {str(e)}")
@@ -76,9 +115,14 @@ def handle_resume(message):
 
 @bot.message_handler(func=lambda message: message.chat.id in waiting_for_technical_task and waiting_for_technical_task[message.chat.id])
 def handle_technical_task(message):
+    global technical_task_counter
+    technical_task_counter += 1  # Увеличиваем счетчик технических заданий
+
     submitter_id = message.from_user.id
-    chanel_chat_id = -1002212279206 # ID тгк (здесь укажите ваш ID)
+    chanel_chat_id = -1002212279206  # ID тгк
+
     technical_task_submitters[message.chat.id] = submitter_id
+    user_technical_tasks[message.chat.id] = technical_task_counter  # Связываем пользователя с техническим заданием
 
     markup = types.InlineKeyboardMarkup()
     bt20 = types.InlineKeyboardButton('Approve', callback_data=f'approve1_{message.chat.id}')
@@ -87,43 +131,48 @@ def handle_technical_task(message):
 
     try:
         if message.content_type == 'text':
-            bot.send_message(chanel_chat_id, f"Техническое задание от пользователя (@{message.from_user.username}):\n{message.text}", reply_markup=markup)
-    except Exception as e: 
-        logging.error(f"Произошла ошибка при отправке резюме: {str(e)}")
-        bot.send_message(message.chat.id, f"Произошла ошибка при отправке резюме: {str(e)}")
+            bot.send_message(chanel_chat_id, f"Техническое задание №{technical_task_counter} от пользователя (@{message.from_user.username}):\n{message.text}", reply_markup=markup)
+    except Exception as e:
+        logging.error(f"Произошла ошибка при отправке ТЗ: {str(e)}")
+        bot.send_message(message.chat.id, f"Произошла ошибка при отправке ТЗ: {str(e)}")
 
     del waiting_for_technical_task[message.chat.id]
-    bot.send_message(message.chat.id, "Ваше техническое задание было успешно отправлено в тгк! \nЖдите ответа от администратора \nОтвет прийдет в этот чат")
-    
+    bot.send_message(message.chat.id, f"Ваше техническое задание было успешно отправлено в тгк под номером {technical_task_counter}! \nЖдите ответа от администратора \nОтвет прийдет в этот чат")
+
 
 @bot.message_handler(content_types=['photo'])
 def send_photo_0(message):
+    
     if message.chat.id not in waiting_for_resume or not waiting_for_resume[message.chat.id]:
         bot.send_message(message.chat.id, "Вы не находитесь в режиме ожидания отправки резюме. Пожалуйста, используйте команду /start и выберите действие.")
         return
-
     photo_id = None
+    
     try:
         photo_id = message.photo[-1].file_id
-        developer_chat_id =  1098482972 # ID разработчика (здесь укажите ваш ID)
-        
-        bot.send_photo(developer_chat_id, photo_id, caption=f"Незаконченное резюме от пользователя (@{message.from_user.username})(фото)")
+        developer_chat_id = 1098482972  # ID разработчика
+        task_number = user_technical_tasks.get(message.chat.id, "Неизвестно")
+        bot.send_photo(developer_chat_id, photo_id, caption=f"Резюме (фото) на техническое задание №{task_number} от пользователя (@{message.from_user.username})")
         bot.send_message(message.chat.id, "Ваше фото было успешно отправлено разработчику.")
+    
     except Exception as e:
-        # Обработка ошибки
         if photo_id is None:
             bot.send_message(message.chat.id, "Не удалось получить идентификатор фото.")
+        
         else:
             bot.send_message(message.chat.id, f"Произошла ошибка при отправке фото: {str(e)}")
-            
-            
+
+
 @bot.message_handler(content_types=['document'])
 def send_document_0(message):
     if message.chat.id not in waiting_for_resume or not waiting_for_resume[message.chat.id]:
         bot.send_message(message.chat.id, "Вы не находитесь в режиме ожидания отправки резюме. Пожалуйста, используйте команду /start и выберите действие.")
         return
-    developer_chat_id =  1098482972 # ID разработчика (здесь укажите ваш ID)
-    bot.send_document(developer_chat_id, message.document.file_id, caption=f"Незаконченное резюме от пользователя (@{message.from_user.username})(документ)")
+
+    developer_chat_id = 1098482972  # ID разработчика
+    task_number = user_technical_tasks.get(message.chat.id, "Неизвестно")
+
+    bot.send_document(developer_chat_id, message.document.file_id, caption=f"Резюме (документ) на техническое задание №{task_number} от пользователя (@{message.from_user.username})")
     bot.send_message(message.chat.id, "Ваш документ был успешно отправлен разработчику.")
 
 
@@ -134,33 +183,42 @@ def callback_message(callback):
     
     if callback.data == 'customer':
         send_actions_menu2(chat_id)
+        
     elif callback.data == 'add_resume':
         waiting_for_resume[chat_id] = True
         bot.send_message(chat_id, 'Пожалуйста, отправьте ваше резюме. Если есть какие-либо файлы, отправьте их вместе с текстом отдельным сообщением.')
+    
     elif callback.data.startswith('approve_'):
         resume_chat_id = callback.data.split('_')[1]
         submitter_id = resume_submitters.get(int(resume_chat_id))
+        
         if submitter_id:
             resume_approved(submitter_id)
             bot.send_message(chat_id, 'Резюме одобрено и отправлено пользователю.')
+        
         else:
             bot.send_message(chat_id, 'Не удалось найти ID отправителя резюме.')
+    
     elif callback.data.startswith('reject_'):
         resume_chat_id = callback.data.split('_')[1]
         submitter_id = resume_submitters.get(int(resume_chat_id))
+        
         if submitter_id:
             bot.send_message(submitter_id, 'К сожалению, ваше резюме нам не подошло.')
             bot.send_message(chat_id, 'Резюме отклонено.')
+        
         else:
             bot.send_message(chat_id, 'Не удалось найти ID отправителя резюме.')
+    
     elif callback.data == 'add_technical_task':
         waiting_for_technical_task[chat_id] = True
         bot.send_message(chat_id, 'Пожалуйста, отправьте ваше техническое задание. Если есть какие-либо файлы, отправьте их вместе с текстом отдельным сообщением.')
+    
     elif callback.data.startswith('approve1_'):
         technical_task_id = callback.data.split('_')[1]
         submitter1_id = technical_task_submitters.get(int(technical_task_id))
-        if submitter1_id:
         
+        if submitter1_id:
             markup = types.InlineKeyboardMarkup()
             bot_link_button = types.InlineKeyboardButton('Перейти к боту', url=f"https://t.me/NIKITAIvachenko_bot?start=sendactions")
             markup.add(bot_link_button)
