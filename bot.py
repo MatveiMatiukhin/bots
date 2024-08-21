@@ -15,21 +15,28 @@ waiting_for_resume = {}
 resume_submitters = {}
 waiting_for_technical_task={}
 technical_task_submitters={}
-
+authorized_users=[1098482972]
 
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
     # Проверка параметров, переданных в URL
     if "sendactions" in message.text:
         send_actions_menu1(message.chat.id)
-    else:
+    elif message.chat.id in authorized_users:
         markup = types.InlineKeyboardMarkup()
         bt1 = types.InlineKeyboardButton('Разработчикам', callback_data='developer')
         markup.add(bt1)
         markup.add(types.InlineKeyboardButton('Заказчикам', callback_data='customer'))
         bot.reply_to(message, 'Выберите предпочитаемое действие:', reply_markup=markup)
-    
-    
+    else:
+        """markup = types.InlineKeyboardMarkup()
+        bt1 = types.InlineKeyboardButton('Разработчикам', callback_data='developer')
+        markup.add(bt1)
+        markup.add(types.InlineKeyboardButton('Заказчикам', callback_data='customer'))
+        bot.reply_to(message, 'Выберите предпочитаемое действие:', reply_markup=markup)"""
+        bot.send_message(message.chat.id, 'Пошел нахуй отсюда, черт')
+
+
 @bot.message_handler(commands=['help'])
 def send_help(message):
     bot.send_message(message.chat.id, 'В команде /info, отображается информауия по работе с ботом \nКоманда /start выводит кнопки для начала действия бота \nКоманда /id выводит id аользователя \nКоманда /legend выводит аккаунт создателя бота')
@@ -40,8 +47,8 @@ def send_id(message):
     bot.send_message(message.chat.id, F'Ваш ID {message.from_user.id}')
     print(message.chat.id)
     bot.send_message(message.chat.id, message.chat.id)
-    
- 
+
+
 
 @bot.message_handler(commands=['legend'])
 def send_legend(message):
