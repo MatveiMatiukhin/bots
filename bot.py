@@ -24,16 +24,11 @@ def send_welcome(message):
         send_actions_menu1(message.chat.id)
     elif message.chat.id in authorized_users:
         markup = types.InlineKeyboardMarkup()
-        bt1 = types.InlineKeyboardButton('Разработчикам', callback_data='developer')
+        bt1 = types.InlineKeyboardButton('ССылка на тг канал', url=f"https://t.me/free_chanel90")
         markup.add(bt1)
-        markup.add(types.InlineKeyboardButton('Заказчикам', callback_data='customer'))
+        markup.add(types.InlineKeyboardButton('Доюавить ТЗ', callback_data='customer'))
         bot.reply_to(message, 'Выберите предпочитаемое действие:', reply_markup=markup)
     else:
-        """markup = types.InlineKeyboardMarkup()
-        bt1 = types.InlineKeyboardButton('Разработчикам', callback_data='developer')
-        markup.add(bt1)
-        markup.add(types.InlineKeyboardButton('Заказчикам', callback_data='customer'))
-        bot.reply_to(message, 'Выберите предпочитаемое действие:', reply_markup=markup)"""
         bot.send_message(message.chat.id, 'Пошел нахуй отсюда, черт')
 
 
@@ -45,9 +40,6 @@ def send_help(message):
 @bot.message_handler(commands=['id'])
 def send_id(message):
     bot.send_message(message.chat.id, F'Ваш ID {message.from_user.id}')
-    print(message.chat.id)
-    bot.send_message(message.chat.id, message.chat.id)
-
 
 
 @bot.message_handler(commands=['legend'])
@@ -89,7 +81,7 @@ def handle_technical_task(message):
     technical_task_submitters[message.chat.id] = submitter_id
 
     markup = types.InlineKeyboardMarkup()
-    bt20 = types.InlineKeyboardButton('Approve1', callback_data=f'approve1_{message.chat.id}')
+    bt20 = types.InlineKeyboardButton('Approve', callback_data=f'approve1_{message.chat.id}')
     bt21 = types.InlineKeyboardButton('Reject', callback_data=f'reject1_{message.chat.id}')
     markup.add(bt20, bt21)
 
@@ -133,16 +125,14 @@ def send_document_0(message):
     developer_chat_id =  1098482972 # ID разработчика (здесь укажите ваш ID)
     bot.send_document(developer_chat_id, message.document.file_id, caption=f"Незаконченное резюме от пользователя (@{message.from_user.username})(документ)")
     bot.send_message(message.chat.id, "Ваш документ был успешно отправлен разработчику.")
-    
-    
+
+
 @bot.callback_query_handler(func=lambda callback: True)
 def callback_message(callback):
     
     chat_id = callback.message.chat.id
-
-    if callback.data == 'developer':
-        send_actions_menu1(chat_id)
-    elif callback.data == 'customer':
+    
+    if callback.data == 'customer':
         send_actions_menu2(chat_id)
     elif callback.data == 'add_resume':
         waiting_for_resume[chat_id] = True
