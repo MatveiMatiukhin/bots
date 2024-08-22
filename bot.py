@@ -72,7 +72,7 @@ def send_id(message):
 
 @bot.message_handler(commands=['legend'])
 def send_legend(message):
-    bot.send_message(message.chat.id, 'Ходит легенда о воине сделавшем этого бота \n@biznesmanil - его имя')
+    bot.send_message(message.chat.id, 'Ходит легенда о бодром боровике, сделавшем этого бота \n@biznesmanil - его имя')
 
 
 @bot.message_handler(commands=['info'])
@@ -137,14 +137,18 @@ def handle_technical_task(message):
 @bot.message_handler(content_types=['photo'])
 def send_photo_0(message):
     
-    if message.chat.id not in waiting_for_resume or not waiting_for_resume[message.chat.id]:
+    if message.chat.id not in waiting_for_resume or not waiting_for_resume[message.chat.id] and message.chat.id not in authorized_users:
         bot.send_message(message.chat.id, "Вы не находитесь в режиме ожидания отправки резюме. Пожалуйста, используйте команду /start и выберите действие.")
+        return
+
+    if message.chat.id not in waiting_for_technical_task or not waiting_for_technical_task[message.chat.id] and message.chat.id in authorized_users:
+        bot.send_message(message.chat.id, "Вы не находитесь в режиме ожидания отправки технического задания. Пожалуйста, используйте команду /start и выберите соответствующее действие")
         return
     photo_id = None
     
     try:
         photo_id = message.photo[-1].file_id
-        developer_chat_id = 1098482972  # ID разработчика
+        developer_chat_id = 1098482972  # ID  азработчика
         task_number = user_technical_tasks.get(message.chat.id, "Неизвестно")
         bot.send_photo(developer_chat_id, photo_id, caption=f"Резюме (фото) на техническое задание №{task_number} от пользователя (@{message.from_user.username})")
         bot.send_message(message.chat.id, "Ваше фото было успешно отправлено разработчику.")
@@ -159,10 +163,15 @@ def send_photo_0(message):
 
 @bot.message_handler(content_types=['document'])
 def send_document_0(message):
-    if message.chat.id not in waiting_for_resume or not waiting_for_resume[message.chat.id]:
+    
+    if message.chat.id not in waiting_for_resume or not waiting_for_resume[message.chat.id] and message.chat.id not in authorized_users:
         bot.send_message(message.chat.id, "Вы не находитесь в режиме ожидания отправки резюме. Пожалуйста, используйте команду /start и выберите действие.")
         return
 
+    if message.chat.id not in waiting_for_technical_task or not waiting_for_technical_task[message.chat.id] and message.chat.id in authorized_users:
+        bot.send_message(message.chat.id, "Вы не находитесь в режиме ожидания отправки технического задания. Пожалуйста, используйте команду /start и выберите соответствующее действие")
+        return
+    
     developer_chat_id = 1098482972  # ID разработчика
     task_number = user_technical_tasks.get(message.chat.id, "Неизвестно")
 
