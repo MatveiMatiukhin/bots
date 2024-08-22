@@ -41,17 +41,8 @@ def send_welcome(message):
         start_count[user_id] = 1
     
     # Если пользователь отправил /start первый раз
-    if start_count[user_id] < 3:
-        bot.send_message(user_id, 'Недоступная функция')
     
     if "sendactions" in message.text:
-        send_actions_menu1(message.chat.id)
-        
-    # Если пользователь отправил /start второй раз
-    elif start_count[user_id] >= 3:
-        bot.send_message(user_id, 'Пошел нахуй отсюда, черт')
-    
-    elif "sendactions" in message.text:
         send_actions_menu1(message.chat.id)
         
     elif message.chat.id in authorized_users:
@@ -60,6 +51,13 @@ def send_welcome(message):
         markup.add(bt1)
         markup.add(types.InlineKeyboardButton('Доюавить ТЗ', callback_data='customer'))
         bot.reply_to(message, 'Выберите предпочитаемое действие:', reply_markup=markup)
+        
+    elif start_count[user_id] < 3 and user_id not in authorized_users:
+        bot.send_message(user_id, 'Недоступная функция')
+        
+    # Если пользователь отправил /start второй раз
+    elif start_count[user_id] >= 3 and user_id not in authorized_users:
+        bot.send_message(user_id, 'Пошел нахуй отсюда, черт')
 
 
 @bot.message_handler(commands=['help'])
