@@ -27,6 +27,11 @@ user_technical_tasks = {}
 
 authorized_users=[1098482972]
 
+last_technical_task_id = {}
+
+last_technical_task_message_id = {} 
+
+editing_technical_task = {}
 
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
@@ -39,8 +44,6 @@ def send_welcome(message):
     
     else:
         start_count[user_id] = 1
-    
-    # Если пользователь отправил /start первый раз
     
     if "sendactions" in message.text:
         send_actions_menu1(message.chat.id)
@@ -55,7 +58,6 @@ def send_welcome(message):
     elif start_count[user_id] < 3 and user_id not in authorized_users:
         bot.send_message(user_id, 'Недоступная функция')
         
-    # Если пользователь отправил /start второй раз
     elif start_count[user_id] >= 3 and user_id not in authorized_users:
         bot.send_message(user_id, 'Пошел нахуй отсюда, черт')
 
@@ -110,29 +112,50 @@ def handle_resume(message):
 @bot.message_handler(func=lambda message: message.chat.id in waiting_for_technical_task and waiting_for_technical_task[message.chat.id])
 def handle_technical_task(message):
     global technical_task_counter
-    technical_task_counter += 1  # Увеличиваем счетчик технических заданий
+    technical_task_counter += 1
 
     submitter1_id = message.from_user.id
     chanel_chat_id = -1002212279206  # ID тгк
 
-    # Сохраняем связь ID пользователя с номером технического задания
     technical_task_submitters[message.chat.id] = submitter1_id
-    user_technical_tasks[submitter1_id] = technical_task_counter  # Важно сохранить на основе submitter_id, а не chat.id
-
+    user_technical_tasks[submitter1_id] = technical_task_counter
+    last_technical_task_id[message.chat.id] = technical_task_counter
     markup = types.InlineKeyboardMarkup()
-    bt20 = types.InlineKeyboardButton('Approve', callback_data=f'approve1_{submitter1_id}')
+    bt20 = types.InlineKeyboardButton('Approve', callback_data=f'approve1_{submitter1_id}', url=f"https://t.me/NIKITAIvachenko_bot?start=sendactions")
     bt21 = types.InlineKeyboardButton('Reject', callback_data=f'reject1_{submitter1_id}')
     markup.add(bt20, bt21)
 
     try:
-        if message.content_type == 'text':
-            bot.send_message(chanel_chat_id, f"Техническое задание №{technical_task_counter} от пользователя (@{message.from_user.username}):\n{message.text}", reply_markup=markup)
+        msg = bot.send_message(chanel_chat_id, f"Техническое задание №{technical_task_counter} от пользователя (@{message.from_user.username}):\n{message.text}", reply_markup=markup)
+        last_technical_task_message_id[message.chat.id] = msg.message_id
     except Exception as e:
         logging.error(f"Произошла ошибка при отправке ТЗ: {str(e)}")
         bot.send_message(message.chat.id, f"Произошла ошибка при отправке ТЗ: {str(e)}")
 
     del waiting_for_technical_task[message.chat.id]
     bot.send_message(message.chat.id, f"Ваше техническое задание было успешно отправлено в тгк под номером {technical_task_counter}! \nЖдите ответа от администратора \nОтвет прийдет в этот чат")
+
+
+@bot.message_handler(func=lambda message: message.chat.id in editing_technical_task and editing_technical_task[message.chat.id])
+def edit_technical_task(message):
+    chat_id = message.chat.id
+
+    task_number = user_technical_tasks.get(message.chat.id)
+
+    if chat_id in last_technical_task_message_id:
+        message_id = last_technical_task_message_id[chat_id]
+        chanel_chat_id = -1002212279206  # Убедитесь, что этот ID канала правильный
+
+        try:
+            bot.edit_message_text(f"Техническое задание №{task_number} от пользователя (@{message.from_user.username}):\n{message.text}", chat_id=chanel_chat_id, message_id=message_id)
+            bot.send_message(chat_id, "Техническое задание успешно обновлено.")
+            del editing_technical_task[chat_id]  # Удаляем запись, чтобы завершить редактирование
+        except Exception as e:
+            bot.send_message(chat_id, f"Произошла ошибка при обновлении сообщения: {str(e)}")
+    else:
+        bot.send_message(chat_id, "Не найдено техническое задание для редактирования.")
+        del editing_technical_task[chat_id]  # Удаляем запись, если ТЗ не найдено
+
 
 @bot.message_handler(content_types=['photo'])
 def send_photo_0(message):
@@ -150,7 +173,7 @@ def send_photo_0(message):
     if message.chat.id not in authorized_users:
         try:
             photo_id = message.photo[-1].file_id
-            developer_chat_id = 1098482972  # ID  азработчика
+            developer_chat_id = 1098482972  # ID  разработчика
             task_number = user_technical_tasks.get(message.chat.id, "Неизвестно")
             bot.send_photo(developer_chat_id, photo_id, caption=f"Резюме (фото) на техническое задание №{task_number} от пользователя (@{message.from_user.username})")
             bot.send_message(message.chat.id, "Ваше фото было успешно отправлено разработчику.")
@@ -243,6 +266,44 @@ def callback_message(callback):
             markup.add(bot_link_button)
             bot.send_message(chat_id, "Нажмите на кнопку ниже, чтобы начать работу:", reply_markup=markup)
 
+    elif callback.data == 'delete_technical_task':
+
+        if chat_id in last_technical_task_message_id:
+            message_id = last_technical_task_message_id[chat_id]
+            chanel_chat_id = -1002212279206  # Убедитесь, что этот ID канала правильный
+
+            try:
+                bot.delete_message(chanel_chat_id, message_id)
+                bot.send_message(chat_id, "Последнее техническое задание было успешно удалено.")
+                del last_technical_task_message_id[chat_id]  # Удаляем запись ID сообщения
+
+            except Exception as e:
+                bot.send_message(chat_id, f"Произошла ошибка при удалении сообщения: {str(e)}")
+
+        else:
+            bot.send_message(chat_id, "Не найдено техническое задание для удаления.")
+
+    elif callback.data == 'confirm':
+
+        if chat_id in last_technical_task_message_id:
+            message_id = last_technical_task_message_id[chat_id]
+            chanel_chat_id = -1002212279206  # Убедитесь, что этот ID канала правильный
+
+            try:
+                bot.delete_message(chanel_chat_id, message_id)
+                bot.send_message(chat_id, "Последнее техническое задание было успешно удалено.")
+                del last_technical_task_message_id[chat_id]  # Удаляем запись ID сообщения
+
+            except Exception as e:
+                bot.send_message(chat_id, f"Произошла ошибка при удалении сообщения: {str(e)}")
+
+    elif callback.data == 'non_confirm':
+        bot.send_message(chat_id, "Спасибо за потраченное время")
+    
+    elif callback.data == 'edit_technical_task':
+        editing_technical_task[chat_id] = True
+        bot.send_message(chat_id, 'Введите новый текст для последнего технического задания:')
+
 
 def send_actions_menu1(chat_id):
     markup = types.InlineKeyboardMarkup()
@@ -278,3 +339,4 @@ bot.infinity_polling()
 '''5202136450'''
 '''1098482972'''
 '''-1002212279206'''
+'''authorized_users=[7374493167, 1048033836]'''
