@@ -49,7 +49,7 @@ def send_welcome(message):
         markup = types.InlineKeyboardMarkup()
         bt1 = types.InlineKeyboardButton('ССылка на тг канал', url=f"https://t.me/free_chanel90")
         markup.add(bt1)
-        markup.add(types.InlineKeyboardButton('Доюавить ТЗ', callback_data='customer'))
+        markup.add(types.InlineKeyboardButton('Добавить ТЗ', callback_data='customer'))
         bot.reply_to(message, 'Выберите предпочитаемое действие:', reply_markup=markup)
         
     elif start_count[user_id] < 3 and user_id not in authorized_users:
@@ -85,11 +85,7 @@ def handle_resume(message):
     submitter_id = message.from_user.id
     developer_chat_id = 1098482972  # ID разработчика
 
-    if message.chat.id in user_technical_tasks:
-        task_number = user_technical_tasks[message.chat.id]
-    
-    else:
-        task_number = "Неизвестно"
+    task_number = user_technical_tasks.get(message.chat.id)
 
     resume_submitters[message.chat.id] = submitter_id
 
@@ -106,7 +102,7 @@ def handle_resume(message):
     except Exception as e:
         logging.error(f"Произошла ошибка при отправке резюме: {str(e)}")
         bot.send_message(message.chat.id, f"Произошла ошибка при отправке резюме: {str(e)}")
-
+    
     del waiting_for_resume[message.chat.id]
     bot.send_message(message.chat.id, "Ваше резюме было успешно отправлено разработчику! \nЖдите ответа от администратора \nОтвет прийдет в этот чат")
 
@@ -116,15 +112,16 @@ def handle_technical_task(message):
     global technical_task_counter
     technical_task_counter += 1  # Увеличиваем счетчик технических заданий
 
-    submitter_id = message.from_user.id
+    submitter1_id = message.from_user.id
     chanel_chat_id = -1002212279206  # ID тгк
 
-    technical_task_submitters[message.chat.id] = submitter_id
-    user_technical_tasks[message.chat.id] = technical_task_counter  # Связываем пользователя с техническим заданием
+    # Сохраняем связь ID пользователя с номером технического задания
+    technical_task_submitters[message.chat.id] = submitter1_id
+    user_technical_tasks[submitter1_id] = technical_task_counter  # Важно сохранить на основе submitter_id, а не chat.id
 
     markup = types.InlineKeyboardMarkup()
-    bt20 = types.InlineKeyboardButton('Approve', callback_data=f'approve1_{message.chat.id}')
-    bt21 = types.InlineKeyboardButton('Reject', callback_data=f'reject1_{message.chat.id}')
+    bt20 = types.InlineKeyboardButton('Approve', callback_data=f'approve1_{submitter1_id}')
+    bt21 = types.InlineKeyboardButton('Reject', callback_data=f'reject1_{submitter1_id}')
     markup.add(bt20, bt21)
 
     try:
@@ -136,7 +133,6 @@ def handle_technical_task(message):
 
     del waiting_for_technical_task[message.chat.id]
     bot.send_message(message.chat.id, f"Ваше техническое задание было успешно отправлено в тгк под номером {technical_task_counter}! \nЖдите ответа от администратора \nОтвет прийдет в этот чат")
-
 
 @bot.message_handler(content_types=['photo'])
 def send_photo_0(message):
