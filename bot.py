@@ -291,7 +291,7 @@ def callback_message(callback):
 
             try:
                 bot.delete_message(chanel_chat_id, message_id)
-                bot.send_message(chat_id, "Последнее техническое задание было успешно удалено.")
+                bot.send_message(chat_id, "Заявление удалено, можете приступать к работе над заказом")
                 del last_technical_task_message_id[chat_id]  # Удаляем запись ID сообщения
 
             except Exception as e:
