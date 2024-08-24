@@ -35,10 +35,9 @@ editing_technical_task = {}
 
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
-    # Проверка параметров, переданных в URL
+
     user_id = message.chat.id
     
-    # Увеличиваем счетчик вызовов команды /start для пользователя
     if user_id in start_count:
         start_count[user_id] += 1
     
@@ -144,17 +143,17 @@ def edit_technical_task(message):
 
     if chat_id in last_technical_task_message_id:
         message_id = last_technical_task_message_id[chat_id]
-        chanel_chat_id = -1002212279206  # Убедитесь, что этот ID канала правильный
+        chanel_chat_id = -1002212279206  # ID  тгк
 
         try:
             bot.edit_message_text(f"Техническое задание №{task_number} от пользователя (@{message.from_user.username}):\n{message.text}", chat_id=chanel_chat_id, message_id=message_id)
             bot.send_message(chat_id, "Техническое задание успешно обновлено.")
-            del editing_technical_task[chat_id]  # Удаляем запись, чтобы завершить редактирование
+            del editing_technical_task[chat_id]  
         except Exception as e:
             bot.send_message(chat_id, f"Произошла ошибка при обновлении сообщения: {str(e)}")
     else:
         bot.send_message(chat_id, "Не найдено техническое задание для редактирования.")
-        del editing_technical_task[chat_id]  # Удаляем запись, если ТЗ не найдено
+        del editing_technical_task[chat_id]
 
 
 @bot.message_handler(content_types=['photo'])
@@ -270,12 +269,12 @@ def callback_message(callback):
 
         if chat_id in last_technical_task_message_id:
             message_id = last_technical_task_message_id[chat_id]
-            chanel_chat_id = -1002212279206  # Убедитесь, что этот ID канала правильный
+            chanel_chat_id = -1002212279206  # ID  тгк
 
             try:
                 bot.delete_message(chanel_chat_id, message_id)
                 bot.send_message(chat_id, "Последнее техническое задание было успешно удалено.")
-                del last_technical_task_message_id[chat_id]  # Удаляем запись ID сообщения
+                del last_technical_task_message_id[chat_id] 
 
             except Exception as e:
                 bot.send_message(chat_id, f"Произошла ошибка при удалении сообщения: {str(e)}")
@@ -287,19 +286,22 @@ def callback_message(callback):
 
         if chat_id in last_technical_task_message_id:
             message_id = last_technical_task_message_id[chat_id]
-            chanel_chat_id = -1002212279206  # Убедитесь, что этот ID канала правильный
+            chanel_chat_id = -1002212279206  # ID  тгк
+            developer_id = 1098482972 # ID  разработчика
+            username = callback.from_user.username
 
             try:
                 bot.delete_message(chanel_chat_id, message_id)
                 bot.send_message(chat_id, "Заявление удалено, можете приступать к работе над заказом")
-                del last_technical_task_message_id[chat_id]  # Удаляем запись ID сообщения
+                del last_technical_task_message_id[chat_id]
+                bot.send_message(developer_id, f"@{username} приступил к выполнению заказа")
 
             except Exception as e:
                 bot.send_message(chat_id, f"Произошла ошибка при удалении сообщения: {str(e)}")
 
     elif callback.data == 'non_confirm':
         bot.send_message(chat_id, "Спасибо за потраченное время")
-    
+        bot.send_message(1098482972, "В последний момент, уебок отказался")
     elif callback.data == 'edit_technical_task':
         editing_technical_task[chat_id] = True
         bot.send_message(chat_id, 'Введите новый текст для последнего технического задания:')
