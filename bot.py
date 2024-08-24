@@ -33,6 +33,7 @@ last_technical_task_message_id = {}
 
 editing_technical_task = {}
 
+
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
 
@@ -84,6 +85,7 @@ def send_info(message):
 @bot.message_handler(func=lambda message: message.chat.id in waiting_for_resume and waiting_for_resume[message.chat.id])
 def handle_resume(message):
     submitter_id = message.from_user.id
+
     developer_chat_id = 1098482972  # ID разработчика
 
     task_number = user_technical_tasks.get(message.chat.id)
@@ -111,9 +113,11 @@ def handle_resume(message):
 @bot.message_handler(func=lambda message: message.chat.id in waiting_for_technical_task and waiting_for_technical_task[message.chat.id])
 def handle_technical_task(message):
     global technical_task_counter
+
     technical_task_counter += 1
 
     submitter1_id = message.from_user.id
+
     chanel_chat_id = -1002212279206  # ID тгк
 
     technical_task_submitters[message.chat.id] = submitter1_id
@@ -127,6 +131,7 @@ def handle_technical_task(message):
     try:
         msg = bot.send_message(chanel_chat_id, f"Техническое задание №{technical_task_counter} от пользователя (@{message.from_user.username}):\n{message.text}", reply_markup=markup)
         last_technical_task_message_id[message.chat.id] = msg.message_id
+
     except Exception as e:
         logging.error(f"Произошла ошибка при отправке ТЗ: {str(e)}")
         bot.send_message(message.chat.id, f"Произошла ошибка при отправке ТЗ: {str(e)}")
@@ -149,8 +154,10 @@ def edit_technical_task(message):
             bot.edit_message_text(f"Техническое задание №{task_number} от пользователя (@{message.from_user.username}):\n{message.text}", chat_id=chanel_chat_id, message_id=message_id)
             bot.send_message(chat_id, "Техническое задание успешно обновлено.")
             del editing_technical_task[chat_id]  
+
         except Exception as e:
             bot.send_message(chat_id, f"Произошла ошибка при обновлении сообщения: {str(e)}")
+
     else:
         bot.send_message(chat_id, "Не найдено техническое задание для редактирования.")
         del editing_technical_task[chat_id]
@@ -183,6 +190,7 @@ def send_photo_0(message):
             
             else:
                 bot.send_message(message.chat.id, f"Произошла ошибка при отправке фото: {str(e)}")
+
     elif message.chat.id in authorized_users:
         try:
             photo_id = message.photo[-1].file_id
@@ -214,6 +222,7 @@ def send_document_0(message):
     task_number = user_technical_tasks.get(message.chat.id, "Неизвестно")
 
     bot.send_document(developer_chat_id, message.document.file_id, caption=f"Резюме (документ) на техническое задание №{task_number} от пользователя (@{message.from_user.username})")
+    
     bot.send_message(message.chat.id, "Ваш документ был успешно отправлен разработчику.")
 
 
