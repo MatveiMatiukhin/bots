@@ -1,7 +1,6 @@
 import telebot
 from telebot import types
 import logging
-import webbrowser
 
 
 TOKEN = '7506077102:AAEOyherkIla8l4W9F_SUE0OhpccwpaaoJ4'
