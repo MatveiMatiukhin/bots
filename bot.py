@@ -24,7 +24,7 @@ technical_task_counter = 0
 
 user_technical_tasks = {}
 
-authorized_users=[1098482972]
+authorized_users=[7374493167, 1048033836]
 
 last_technical_task_id = {}
 
@@ -85,7 +85,7 @@ def send_info(message):
 def handle_resume(message):
     submitter_id = message.from_user.id
 
-    developer_chat_id = 1098482972  # ID разработчика
+    developer_chat_id = 1048033836  # ID разработчика
 
     task_number = user_technical_tasks.get(message.chat.id)
 
@@ -128,7 +128,7 @@ def handle_technical_task(message):
     markup.add(bt20, bt21)
 
     try:
-        msg = bot.send_message(chanel_chat_id, f"Техническое задание №{technical_task_counter} от пользователя (@{message.from_user.username}):\n{message.text}", reply_markup=markup)
+        msg = bot.send_message(chanel_chat_id, f"Техническое задание №{technical_task_counter}:\n{message.text}", reply_markup=markup)
         last_technical_task_message_id[message.chat.id] = msg.message_id
 
     except Exception as e:
@@ -150,7 +150,7 @@ def edit_technical_task(message):
         chanel_chat_id = -1002212279206  # ID  тгк
 
         try:
-            bot.edit_message_text(f"Техническое задание №{task_number} от пользователя (@{message.from_user.username}):\n{message.text}", chat_id=chanel_chat_id, message_id=message_id)
+            bot.edit_message_text(f"Техническое задание №{task_number}:\n{message.text}", chat_id=chanel_chat_id, message_id=message_id)
             bot.send_message(chat_id, "Техническое задание успешно обновлено.")
             del editing_technical_task[chat_id]  
 
@@ -165,6 +165,8 @@ def edit_technical_task(message):
 @bot.message_handler(content_types=['photo'])
 def send_photo_0(message):
     
+    photo_id = None
+
     if (message.chat.id not in waiting_for_resume or not waiting_for_resume[message.chat.id]) and message.chat.id not in authorized_users:
         bot.send_message(message.chat.id, "Вы не находитесь в режиме ожидания отправки резюме. Пожалуйста, используйте команду /start и выберите действие.")
         return
@@ -174,11 +176,10 @@ def send_photo_0(message):
         bot.send_message(message.chat.id, "Вы не находитесь в режиме ожидания отправки технического задания. Пожалуйста, используйте команду /start и выберите соответствующее действие")
         return
 
-    photo_id = None
-    if message.chat.id not in authorized_users:
+    elif message.chat.id not in authorized_users:
         try:
             photo_id = message.photo[-1].file_id
-            developer_chat_id = 1098482972  # ID  разработчика
+            developer_chat_id = 1048033836  # ID  разработчика
             task_number = user_technical_tasks.get(message.chat.id, "Неизвестно")
             bot.send_photo(developer_chat_id, photo_id, caption=f"Резюме (фото) на техническое задание №{task_number} от пользователя (@{message.from_user.username})")
             bot.send_message(message.chat.id, "Ваше фото было успешно отправлено разработчику.")
@@ -195,7 +196,7 @@ def send_photo_0(message):
             photo_id = message.photo[-1].file_id
             developer_chat_id = -1002212279206  # ID  тгк
             task_number = user_technical_tasks.get(message.chat.id, "Неизвестно")
-            bot.send_photo(developer_chat_id, photo_id, caption=f"Техническое задание (фото) №{task_number} от пользователя (@{message.from_user.username})")
+            bot.send_photo(developer_chat_id, photo_id, caption=f"Техническое задание (фото) №{task_number}")
             bot.send_message(message.chat.id, "Ваше фото было успешно отправлено в тгк.")
         
         except Exception as e:
@@ -217,7 +218,7 @@ def send_document_0(message):
         bot.send_message(message.chat.id, "Вы не находитесь в режиме ожидания отправки технического задания. Пожалуйста, используйте команду /start и выберите соответствующее действие")
         return
     
-    developer_chat_id = 1098482972  # ID разработчика
+    developer_chat_id = 1048033836  # ID разработчика
     task_number = user_technical_tasks.get(message.chat.id, "Неизвестно")
 
     bot.send_document(developer_chat_id, message.document.file_id, caption=f"Резюме (документ) на техническое задание №{task_number} от пользователя (@{message.from_user.username})")
@@ -292,24 +293,19 @@ def callback_message(callback):
 
     elif callback.data == 'confirm':
 
-        if chat_id in last_technical_task_message_id:
-            message_id = last_technical_task_message_id[chat_id]
-            chanel_chat_id = -1002212279206  # ID  тгк
-            developer_id = 1098482972 # ID  разработчика
-            username = callback.from_user.username
+        chanel_chat_id = -1002212279206  # ID  тгк
+        developer_id = 1048033836 # ID  разработчика
+        username = callback.from_user.username
 
-            try:
-                bot.delete_message(chanel_chat_id, message_id)
-                bot.send_message(chat_id, "Заявление удалено, можете приступать к работе над заказом")
-                del last_technical_task_message_id[chat_id]
-                bot.send_message(developer_id, f"@{username} приступил к выполнению заказа")
-
-            except Exception as e:
-                bot.send_message(chat_id, f"Произошла ошибка при удалении сообщения: {str(e)}")
+        try:
+            bot.send_message(developer_id, f"@{username} приступил к выполнению заказа")
+            bot.send_message(callback.message.chat.id, f"Приступайте к выполнению")
+        except Exception as e:
+            bot.send_message(chat_id, f"Произошла ошибка при удалении сообщения: {str(e)}")
 
     elif callback.data == 'non_confirm':
         bot.send_message(chat_id, "Спасибо за потраченное время")
-        bot.send_message(1098482972, "В последний момент, уебок отказался")
+        bot.send_message(1048033836, "В последний момент, уебок отказался")
     elif callback.data == 'edit_technical_task':
         editing_technical_task[chat_id] = True
         bot.send_message(chat_id, 'Введите новый текст для последнего технического задания:')
