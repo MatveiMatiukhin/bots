@@ -32,6 +32,8 @@ last_technical_task_message_id = {}
 
 editing_technical_task = {}
 
+for_confirmation = {}
+
 
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
@@ -239,16 +241,22 @@ def callback_message(call):
         bot.send_message(chat_id, 'Пожалуйста, отправьте ваше резюме. Если есть какие-либо файлы, отправьте их вместе с текстом отдельным сообщением.')
     
     elif call.data.startswith('approve_'):
+        developer_id = 1098482972
         resume_chat_id = call.data.split('_')[1]
         submitter_id = resume_submitters.get(int(resume_chat_id))
         
         if submitter_id:
-            resume_approved(submitter_id)
-            bot.send_message(chat_id, 'Резюме одобрено и отправлено пользователю.')
-        
+            confirmation(developer_id)
+            for_confirmation[call.message.chat.id] = submitter_id
+            
         else:
             bot.send_message(chat_id, 'Не удалось найти ID отправителя резюме.')
     
+    elif call.data == 'confirm52':
+        submitter_id = for_confirmation.get(call.message.chat.id)
+        resume_approved(submitter_id)
+        bot.send_message(chat_id, 'Резюме одобрено и отправлено пользователю.')
+
     elif call.data.startswith('reject_'):
         resume_chat_id = call.data.split('_')[1]
         submitter_id = resume_submitters.get(int(resume_chat_id))
@@ -300,12 +308,14 @@ def callback_message(call):
         try:
             bot.send_message(developer_id, f"@{username} приступил к выполнению заказа")
             bot.send_message(call.message.chat.id, f"Приступайте к выполнению")
+
         except Exception as e:
             bot.send_message(chat_id, f"Произошла ошибка при удалении сообщения: {str(e)}")
 
     elif call.data == 'non_confirm':
         bot.send_message(chat_id, "Спасибо за потраченное время")
         bot.send_message(1098482972, "В последний момент, уебок отказался")
+
     elif call.data == 'edit_technical_task':
         editing_technical_task[chat_id] = True
         bot.send_message(chat_id, 'Введите новый текст для последнего технического задания:')
@@ -337,6 +347,13 @@ def resume_approved(submitter_id):
     bt12 = types.InlineKeyboardButton('Отклонить', callback_data='non_confirm')
     markup.add(bt11, bt12)
     bot.send_message(submitter_id, 'Ваше резюме было принято, можете приступать к выполнению заказа.', reply_markup=markup)
+
+
+def confirmation(developer_id):
+    markup = types.InlineKeyboardMarkup()
+    bt52 = types.InlineKeyboardButton('Подтвердить(да, он достоин)', callback_data = 'confirm52')
+    markup.add(bt52)
+    bot.send_message(developer_id, 'Вы уверены, что он достоин?', reply_markup=markup)
 
 
 bot.infinity_polling()
