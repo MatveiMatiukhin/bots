@@ -24,7 +24,7 @@ technical_task_counter = 0
 
 user_technical_tasks = {}
 
-authorized_users=[1098482972]
+authorized_users=[1098482972,993500211]
 
 last_technical_task_id = {}
 
